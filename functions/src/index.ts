@@ -17,7 +17,6 @@ export const addFace = functions.https.onCall(async (data, context) => {
     const image = data.image;
     const pid = data.personId;
     const group = data.groupId;
-
     const client = getClient();
     await client.personGroupPerson.addFaceFromStream(group, pid, image);
     await client.personGroup.train(group);
@@ -25,6 +24,9 @@ export const addFace = functions.https.onCall(async (data, context) => {
 });
 
 export const getFaceId = functions.https.onCall(async (data, context) => {
+    if (!context.auth) {
+        return "Bad Request";
+    }
     const image = data.image;
     const group = data.groupId || DEFAULT_PERSON_GROUP;
     const client = getClient();
@@ -38,6 +40,7 @@ export const getFaceId = functions.https.onCall(async (data, context) => {
 });
 
 export const createPerson = functions.https.onCall(async (data, context) => {
+    if (!context.auth) { return "Bad Request" };
     const image = data.image;
     const group = data.groupId;
     const client = getClient();
