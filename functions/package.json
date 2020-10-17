@@ -19,7 +19,7 @@
     "@types/atob": "^2.1.2",
     "atob": "^2.1.2",
     "axios": "^0.20.0",
-    "firebase-admin": "^8.10.0",
+    "firebase-admin": "^8.13.0",
     "firebase-functions": "^3.6.1",
     "ms-rest-js": "^1.0.1",
     "node-blob": "0.0.2"
