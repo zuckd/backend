@@ -17,12 +17,13 @@
     "@azure/cognitiveservices-face": "^4.1.0",
     "@azure/ms-rest-azure-js": "^2.0.1",
     "@types/atob": "^2.1.2",
+    "@types/uuid": "^8.3.0",
     "atob": "^2.1.2",
-    "axios": "^0.20.0",
     "firebase-admin": "^8.13.0",
     "firebase-functions": "^3.6.1",
     "ms-rest-js": "^1.0.1",
-    "node-blob": "0.0.2"
+    "node-blob": "0.0.2",
+    "uuid": "^8.3.1"
   },
   "devDependencies": {
     "tslint": "^5.12.0",

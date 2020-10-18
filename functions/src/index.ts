@@ -3,6 +3,7 @@ import { FaceClient } from "@azure/cognitiveservices-face";
 import { CognitiveServicesCredentials } from "@azure/ms-rest-azure-js";
 import admin = require("firebase-admin");
 import { HttpsError } from 'firebase-functions/lib/providers/https';
+import { v4 as uuidv4 } from 'uuid';
 // import Axios from "axios";
 // import { FaceListListOptionalParams, PersonGroupListOptionalParams } from '@azure/cognitiveservices-face/esm/models';
 admin.initializeApp();
@@ -13,33 +14,50 @@ export const addFace = functions.https.onCall(async (data, context) => {
     if (!context.auth) {
         throw new HttpsError("unauthenticated", "Request had invalid credentials.");
     }
-    const image = data.image;
-    let pid = data.personId;
-    const client = getClient();
-    if (pid) {
-        await client.personGroupPerson.addFaceFromStream(GROUP_ID, pid, image);
-    } else {
-        const newPerson = await client.personGroupPerson.create(GROUP_ID);
-        await client.personGroupPerson.addFaceFromStream(GROUP_ID, newPerson.personId, image);
-        pid =  newPerson.personId;
+    try {
+        const img_str: string = data.image;
+        const image = Buffer.from(img_str, 'base64');
+        let pid = data.personId;
+        const client = getClient();
+        if (pid) {
+            await client.personGroupPerson.addFaceFromStream(GROUP_ID, pid, image);
+        } else {
+            console.log("creating new person")
+            const name = uuidv4();
+            const newPerson = await client.personGroupPerson.create(GROUP_ID, {
+                name: name
+            });
+            console.log("created new person")
+            await client.personGroupPerson.addFaceFromStream(GROUP_ID, newPerson.personId, image);
+            pid =  newPerson.personId;
+        }
+        return pid;
+    } catch (e) {
+        console.error(e);
+        throw new HttpsError("internal", "Unknown error:", e.toString());
     }
-    await client.personGroup.train(GROUP_ID);
-    return pid;
 });
 
 export const getPersonId = functions.https.onCall(async (data, context) => {
     if (!context.auth) {
         throw new HttpsError("unauthenticated", "Request had invalid credentials.");
     }
-    const image = data.image;
-    const client = getClient();
-    const faces = await client.face.detectWithStream(image, {detectionModel: "detection_02"});
-    let faceIds: string[] = []
-    faces.forEach(face => faceIds.push(face.faceId as string));
-    const resp = await client.face.identify(faceIds, {personGroupId: GROUP_ID});
-    let results: string[] = []
-    resp.forEach(r => results.push(r.candidates[0].personId));
-    return results;
+    try {
+        const img_str = data.image;
+        const image = Buffer.from(img_str, 'base64');
+        const client = getClient();
+        const faces = await client.face.detectWithStream(image, {detectionModel: "detection_02"});
+        let faceIds: string[] = []
+        faces.forEach(face => faceIds.push(face.faceId as string));
+        const resp = await client.face.identify(faceIds, {personGroupId: GROUP_ID});
+        let results: string[] = []
+        resp.forEach(r => results.push(r.candidates[0].personId));
+        return results;
+    } catch (e) {
+        console.error(e);
+        throw new HttpsError("internal", "Possible Face Error", e.toString());
+    }
+
 });
 
 // export const onSignOn = functions.auth.user().onCreate((user, context) => {
